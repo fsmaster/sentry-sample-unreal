@@ -1,0 +1,10 @@
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+Build/
+Packaged/
+Plugins/Sentry/
+.vs/
+*.sln
+.sentry-native/

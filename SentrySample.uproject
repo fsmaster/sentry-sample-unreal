@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "5.8",
+	"Category": "",
+	"Description": "Smallest UE5 project that crashes into Sentry",
+	"Modules": [
+		{
+			"Name": "SentrySample",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "Sentry",
+			"Enabled": true
+		}
+	]
+}

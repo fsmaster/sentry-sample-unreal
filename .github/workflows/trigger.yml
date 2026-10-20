@@ -1,0 +1,39 @@
+name: trigger
+
+# Started by the playground dashboard (or by hand from the Actions tab).
+# GitHub runners have no Unreal Engine, so the game is packaged on a dev
+# machine (see README) and attached to the "build" release together with
+# nothing else. Debug symbols (PDBs) were uploaded to Sentry during packaging.
+# Here we only download that exact build and crash it.
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "id that goes into the crash (run_id tag)"
+        default: "manual"
+      fresh:
+        description: "not used for crashes, they group by stack trace"
+        default: "true"
+
+jobs:
+  crash:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download packaged game
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download build -R ${{ github.repository }} -p SentrySample-Win64.zip
+          Expand-Archive SentrySample-Win64.zip -DestinationPath game
+
+      - name: Run and crash
+        run: |
+          $exe = Get-ChildItem game -Recurse -Filter SentrySample.exe | Where-Object { $_.DirectoryName -notmatch 'Binaries' } | Select-Object -First 1
+          if (-not $exe) { $exe = Get-ChildItem game -Recurse -Filter SentrySample.exe | Select-Object -First 1 }
+          $p = Start-Process $exe.FullName -ArgumentList "-sentryrun=${{ inputs.run_id }}","-nullrhi","-unattended","-nosplash","-log" -PassThru
+          $p.WaitForExit(120000) | Out-Null
+          "game exit code: $($p.ExitCode)"
+          # crashpad_handler is a separate process and uploads after the game is gone
+          Start-Sleep -Seconds 30
+          Get-ChildItem game -Recurse -Filter *.log | Select-Object -First 1 | Get-Content -Tail 15
